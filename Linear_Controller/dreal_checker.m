@@ -1,12 +1,13 @@
 clear all
+close all
 
 %syms Ix Iy Iz Jr b d l m g dt Omega 
-length = 1:10;
+length = 1:100000;
 history = zeros(length,13);
 
 
 %starting variables
-phi = 2;
+phi = 0;
 theta = 0;
 psi = 0;
 d_phi = 0;
@@ -16,7 +17,7 @@ d_psi = 0;
 
 x = 0;
 y = 0;
-z = .002;
+z = 0;
 int_z = 0;
 d_x = 0;
 d_y = 0;
@@ -33,7 +34,7 @@ d = 7.5*10^(-7);
 l = 0.23;
 m = 0.65;
 g = 9.81;
-dt = 0.01;
+dt = 0.00001;
 
 
 
@@ -66,7 +67,6 @@ g1 = 0;
 g2 = 0;
 g3 = 0;
 g4 = (l/Ix)*u22;
-%Originally u32
 g5 = (l/Iy*u32);
 g6 = u42*(1/Iz);
 g7 = 0;
@@ -105,7 +105,7 @@ z = z + dt*d_z;
 
 d_x = d_x + dt*g10;
 d_y = d_y + dt*g11;
-d_z = d_z + dt*g12;
+d_z = d_z + dt*(g - g12);
 
 int_z = int_z + dt*z;
 
@@ -119,8 +119,52 @@ f = [phi theta psi d_phi d_theta d_psi x y z d_x d_y d_z int_z];
 
 end
 
+figure
 %Plots phi or f1
+plot(length,history(:,1))
+title('Phi plot')
+xlabel('Time [depends on dt]')
+ylabel('Phi [rads]')
+
+
+figure
+%Plots theta
+plot(length,history(:,2))
+title('Theta plot')
+xlabel('Time [depends on dt]')
+ylabel('Theta [rads]')
+
+
+figure 
+%Plots psi
+plot(length,history(:,3))
+title('Psi plot')
+xlabel('Time [depends on dt]')
+ylabel('Psi [rads]')
+
+figure
+%Plots phi or f1
+plot(length,history(:,7))
+title('X plot')
+xlabel('Time [depends on dt]')
+ylabel('X [m]')
+
+
+figure
+%Plots theta
+plot(length,history(:,8))
+title('Y plot')
+xlabel('Time [depends on dt]')
+ylabel('Y [m]')
+
+
+figure 
+%Plots psi
 plot(length,history(:,9))
+title('Z plot')
+xlabel('Time [depends on dt]')
+ylabel('Z [m]')
+
 
 
 
