@@ -1,0 +1,18 @@
+{
+  "logconfig": {
+    "logblock": {
+      "max": 180, 
+      "variables": [
+        {
+          "stored_as": "float", 
+          "type": "TOC", 
+          "name": "baro.pressure", 
+          "fetch_as": "float"
+        }
+      ], 
+      "min": -180, 
+      "name": "Altitude", 
+      "period": 10
+    }
+  }
+}

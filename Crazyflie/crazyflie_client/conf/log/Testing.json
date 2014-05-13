@@ -1,0 +1,72 @@
+{
+  "logconfig": {
+    "logblock": {
+      "max": 180, 
+      "variables": [
+        {
+          "stored_as": "float", 
+          "type": "TOC", 
+          "name": "baro.pressure", 
+          "fetch_as": "float"
+        }, 
+        {
+          "stored_as": "int32_t", 
+          "type": "TOC", 
+          "name": "motor.m1", 
+          "fetch_as": "int32_t"
+        }, 
+        {
+          "stored_as": "int32_t", 
+          "type": "TOC", 
+          "name": "motor.m2", 
+          "fetch_as": "int32_t"
+        }, 
+        {
+          "stored_as": "int32_t", 
+          "type": "TOC", 
+          "name": "motor.m3", 
+          "fetch_as": "int32_t"
+        }, 
+        {
+          "stored_as": "int32_t", 
+          "type": "TOC", 
+          "name": "motor.m4", 
+          "fetch_as": "int32_t"
+        }, 
+        {
+          "stored_as": "float", 
+          "type": "TOC", 
+          "name": "pm.vbat", 
+          "fetch_as": "float"
+        }, 
+        {
+          "stored_as": "float", 
+          "type": "TOC", 
+          "name": "stabilizer.pitch", 
+          "fetch_as": "float"
+        }, 
+        {
+          "stored_as": "float", 
+          "type": "TOC", 
+          "name": "stabilizer.roll", 
+          "fetch_as": "float"
+        }, 
+        {
+          "stored_as": "uint16_t", 
+          "type": "TOC", 
+          "name": "stabilizer.thrust", 
+          "fetch_as": "uint16_t"
+        }, 
+        {
+          "stored_as": "float", 
+          "type": "TOC", 
+          "name": "stabilizer.yaw", 
+          "fetch_as": "float"
+        }
+      ], 
+      "min": -180, 
+      "name": "Testing", 
+      "period": 1
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "device_config_mapping": {
+    "DragonRise Inc.   Generic   USB  Joystick  ": "Generic_OS_X", 
+    "Logitech Logitech Extreme 3D": "Badass Stick One"
+  }, 
+  "slew_rate": 30, 
+  "client_side_xmode": false, 
+  "input_device": "DragonRise Inc.   Generic   USB  Joystick  ", 
+  "link_uri": "radio://0/4/250K", 
+  "max_yaw": 200, 
+  "flightmode": "Normal", 
+  "max_rp": 30, 
+  "open_tabs": "Flight Control,Parameters,Console,Log TOC,Plotter", 
+  "trim_pitch": -5.551115123125783e-17, 
+  "slew_limit": 45, 
+  "trim_roll": 0.0, 
+  "max_thrust": 99.99, 
+  "min_thrust": 25.0
+}

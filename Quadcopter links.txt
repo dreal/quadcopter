@@ -1,0 +1,42 @@
+﻿Try to become familiar with the different sensors built into the crazyflie board and APM autopilot from the following links
+
+
+Priority
+3DR Robotics 2013 DIY(Do It Yourself) Quad Kit
+
+
+About ardupilot: http://en.wikipedia.org/wiki/Ardupilot
+
+
+We are currently using the recently outdated Quad 2013 model for the large quadcopter which has most info available here: http://3drobotics.com/learn/discontinued-products/
+
+
+* Assembly Instructions
+* Frame Kit Assembly Instructions
+* Download software
+* Show me how to set up battery monitoring (this still needs to be done)
+* Show me how to calibrate the ESCs
+
+
+Download the ground station mission planner: http://3drobotics.com/learn/download_software/
+
+
+
+
+Crazyflie
+The mathematica_control and matlab_control folders on github hold the files for deriving and testing simulink model of a quadcopter based on the quadcopter used in Bouabdallah’s thesis (which is included in the repository)
+
+
+When running Matlab scripts or Simulink you will need to have installed Matlab as well which can be downloaded from CMU: http://www.cmu.edu/computing/software/all/matlab/
+
+
+Mathematica was used in deriving a linear controller to replace the PID controller on the Crazyflie (yet to be done): http://www.cmu.edu/computing/software/all/mathematica/index.html
+
+
+
+
+Crazyflie buying page: 
+http://www.seeedstudio.com/depot/Crazyflie-Nano-Quadcopter-Kit-10DOF-with-Crazyradio-BCCFK02B-p-1365.html
+
+
+Crazyflie assembly/wiki: http://wiki.bitcraze.se/projects:crazyflie:mechanics:assembly

@@ -1,0 +1,156 @@
+{
+  "info": {
+    "cid": {
+      "ident": 1, 
+      "group": "info", 
+      "name": "cid", 
+      "pytype": "<L", 
+      "__class__": "ParamTocElement", 
+      "ctype": "uint32_t", 
+      "access": 0
+    }
+  }, 
+  "blah": {
+    "p": {
+      "ident": 0, 
+      "group": "blah", 
+      "name": "p", 
+      "pytype": "<B", 
+      "__class__": "ParamTocElement", 
+      "ctype": "uint8_t", 
+      "access": 16
+    }
+  }, 
+  "flightctrl": {
+    "xmode": {
+      "ident": 14, 
+      "group": "flightctrl", 
+      "name": "xmode", 
+      "pytype": "<B", 
+      "__class__": "ParamTocElement", 
+      "ctype": "uint8_t", 
+      "access": 16
+    }, 
+    "ratepid": {
+      "ident": 15, 
+      "group": "flightctrl", 
+      "name": "ratepid", 
+      "pytype": "<B", 
+      "__class__": "ParamTocElement", 
+      "ctype": "uint8_t", 
+      "access": 16
+    }
+  }, 
+  "apid": {
+    "iyaw": {
+      "ident": 11, 
+      "group": "apid", 
+      "name": "iyaw", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "irp": {
+      "ident": 10, 
+      "group": "apid", 
+      "name": "irp", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "drp": {
+      "ident": 12, 
+      "group": "apid", 
+      "name": "drp", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "prp": {
+      "ident": 8, 
+      "group": "apid", 
+      "name": "prp", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "dyaw": {
+      "ident": 13, 
+      "group": "apid", 
+      "name": "dyaw", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "pyaw": {
+      "ident": 9, 
+      "group": "apid", 
+      "name": "pyaw", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }
+  }, 
+  "rpid": {
+    "iyaw": {
+      "ident": 5, 
+      "group": "rpid", 
+      "name": "iyaw", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "irp": {
+      "ident": 4, 
+      "group": "rpid", 
+      "name": "irp", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "drp": {
+      "ident": 6, 
+      "group": "rpid", 
+      "name": "drp", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "prp": {
+      "ident": 2, 
+      "group": "rpid", 
+      "name": "prp", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "dyaw": {
+      "ident": 7, 
+      "group": "rpid", 
+      "name": "dyaw", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }, 
+    "pyaw": {
+      "ident": 3, 
+      "group": "rpid", 
+      "name": "pyaw", 
+      "pytype": "<f", 
+      "__class__": "ParamTocElement", 
+      "ctype": "float", 
+      "access": 16
+    }
+  }
+}
