@@ -4,9 +4,7 @@
 Priority
 3DR Robotics 2013 DIY(Do It Yourself) Quad Kit
 
-
 About ardupilot: http://en.wikipedia.org/wiki/Ardupilot
-
 
 We are currently using the recently outdated Quad 2013 model for the large quadcopter which has most info available here: http://3drobotics.com/learn/discontinued-products/
 
@@ -20,6 +18,18 @@ We are currently using the recently outdated Quad 2013 model for the large quadc
 
 Download the ground station mission planner: http://3drobotics.com/learn/download_software/
 
+About the Six-Axis (Gyro + Accelerometer) built into APM 2.6 and Crazyflie board: http://www.invensense.com/mems/gyro/mpu6050.html
+
+About 3DR compass in APM 2.6: http://www51.honeywell.com/aero/common/documents/myaerospacecatalog-documents/Defense_Brochures-documents/HMC5883L_3-Axis_Digital_Compass_IC.pdf
+
+About altimeter built into APM 2.6 and Crazyflie (after testing done we have noticed it will fluctuate 1 to 2 meters over the course of a minute or two so is unreliable indoors if you plan to make an altitude based PID controller): http://www.meas-spec.com/downloads/MS5611-01BA03.pdf
+
+
+About GPS Ublox module, antennae, and Low noise filter: 
+http://www.u-blox.com/images/downloads/Product_Docs/LEA-6_ProductSummary_%28GPS.G6-HW-09002%29.pdf
+http://www.taoglas.com/images/product_images/original_images/GP.1575.25.4.A.02%20GPS%20Patch%20Antenna%201575MHz%20190410.pdf
+http://pdfserv.maxim-ic.com/en/ds/MAX2659.pdf
+
 
 
 
@@ -31,8 +41,6 @@ When running Matlab scripts or Simulink you will need to have installed Matlab a
 
 
 Mathematica was used in deriving a linear controller to replace the PID controller on the Crazyflie (yet to be done): http://www.cmu.edu/computing/software/all/mathematica/index.html
-
-
 
 
 Crazyflie buying page: 
