@@ -1,0 +1,6 @@
+#!/bin/bash
+
+jflex Lexer.lex;
+bison YYParser.y;
+javac *java;
+
