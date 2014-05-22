@@ -18,17 +18,17 @@ Xupper = [10; 10; 10];
 x1excludelower = -0.1; x1excludeupper = 0.1;
 x2excludelower = -0.1; x2excludeupper = 0.1;
 x3excludelower = -0.1; x3excludeupper = 0.1;
-Xexcludelower = [-0.1; -0.1; -0.1];
-Xexcludeupper = [0.1; 0.1; 0.1];
+Xexcludelower = [-0.001; -0.001; -0.001];
+Xexcludeupper = [0.001; 0.001; 0.001];
 
 
 % To how many decimal places should coefficients be computed?
-precision = 3;
+precision = 1;
 % Number of initial samples
-samplenumber = 10; 
+samplenumber = 1; 
 % Max number of iterations
 maxouteriterations = 150;
 
-myfun =barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxouteriterations)
+[success, barrier] =barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxouteriterations)
                 
 toc;

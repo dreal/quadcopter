@@ -1,24 +1,26 @@
 
 function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxiterations) 
 
-
 	[~, myname] = system('hostname');
 	myname = strtrim( myname ); % remove newline at end
 
 	generateWorkspace();
 	%% Generate a monomial vector. Candidate will be z'*p, for p parameter vector
-	Z = monomials(X, degree);
+	Z = monomials(X, 1:degree);
 	
+	Xsamples = generateInitialSamples( X, Xlower, Xupper, samplenumber );
+
 	success = 0;
 	iterations = 0;
 	while ( (success == 0) && (iterations < maxiterations) )
-		Xsamples = generateInitialSamples( X, Xlower, Xupper, samplenumber );
-		[A,b] = generateConstraints( Xsamples, X, Z, f);
+		[A,b] = generateSampleConstraints( Xsamples, X, Z, f);
 		V = generateCandidate( Z, A, b, precision );
-		dVdt = char(vpa(jacobian(V, X)*f(X)));
-		[posresult, negresult] = querySolver( V, dVdt, Z, X, Xlower, Xupper, Xexcludelower, Xexcludeupper );
+		dVdt = vpa(jacobian(V, X)*f(X));
 
+		[V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z, f, maxiterations, precision );
+		dVdt = vpa(jacobian(V, X)*f(X));
 
+		[posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcludelower, Xexcludeupper );
 
 		if ( strcmp(posresult, 'unsat') && strcmp(negresult,'unsat' ) )
 			fprintf('Candidate validated successfully!\n');
@@ -97,22 +99,22 @@ function extendedSamples = appendSample( sampleList, newSample )
 	extendedSamples = [sampleList; newSample];
 end
 
-function [A,b] = generateConstraints( Xsamples, X, Z, f )
+function [A,b] = generateSampleConstraints( Xsamples, X, Z, f )
 	fprintf('Generating constraints...\n');
 
 	dZdX = jacobian(Z, X);
 	derivAt = [];
 	gradAt = [];
-	Acounter = 0;
+	Acounter = 1;
 	for i = 1:size( Xsamples, 1 )
 		gradAt(:,:,i) = subs( dZdX, X, transpose(Xsamples(i, :)) );
 		derivAt(:,:,i) = gradAt(:,:,i)*f(Xsamples(i,:));
-		Acounter = Acounter + 2;
 		A( Acounter, : ) = derivAt(:, :, i)';
 		A( Acounter + 1, : ) = subs(-Z, X, transpose(Xsamples(i, :)) );
+		Acounter = Acounter + 2;
 	end
 	
-	b = (10^(-precision))*ones( Acounter + 1, 1);
+	b = zeros( size(A,1), 1);
 end
 
 function V = generateCandidate( Z, A, b, precision )
@@ -135,37 +137,46 @@ function V = generateCandidate( Z, A, b, precision )
 	V = vpa(Z.'*x);
 end
 
-function [posmin, negmax] = queryOptimizer( V, dV )
-
-end
-
-[V, Xsamples, success] = improveWithOptimizer( V, dV, Xsamples, Xlower, Xupper, X, Z, f, maxiterations )
+function [V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z, f, maxiterations, precision )
 	
 	iterations = 0;
 	success = 0;
 
-	while ( (iterations < maxiterations) && (sucess == 0) )
-		%[A, b] = generateExtendedConstraints(j
-		[posmin, posminx, negmax, negmaxx] = queryOptimizer( V, dV, A, b );
-	
-		%if ( posmin <= (10^(-precision)) )
-		if ( posmin <= 0 )
+	while ( (iterations < maxiterations) && (success == 0) )
+
+		Vfunc = matlabFunction( V, 'vars', {X} );
+
+		dVdt = vpa(jacobian(V, X)*f(X));
+		minusdVfunc = matlabFunction( -dVdt, 'vars', {X} );
+
+		[posminx, posmin, posexitflag, posoutput] = fmincon(Vfunc, zeros(length(X), 1), [], [], [], [], Xlower, Xupper);
+		[negmaxx, negmax, negexitflag, negoutput] = fmincon(minusdVfunc, zeros(length(X), 1), [], [], [], [], Xlower, Xupper);
+
+		if ( posmin < 0 )
 			fprintf('Improving function positivity with optimizer counterexample...\n');
-			Xsamples = appendSample( Xsamples, posminx )
+			Xsamples = appendSample( Xsamples, transpose(posminx) )
 			success = 0;
 		else
 			fprintf('Function positivity succeeds w.r.t. optimizer.\n');
 			success = 1;
 		end
 
-		if ( negmax >= 0 )
+		if ( negmax < 0 )
 			fprintf('Improving derivative negativity with optimizer counterexample...\n');
-			Xsamples = appendSample( Xsamples, negmaxx )
+			Xsamples = appendSample( Xsamples, transpose(negmaxx) )
 			success = success & 0;
 		else
 			fprintf('Derivative negativity succeeds w.r.t. optimizer\n');
 			success = success & 1;
 		end
+
+		if ( success == 0 )
+			[A, b] = generateSampleConstraints( Xsamples, X, Z, f );
+			V = generateCandidate(Z, A, b, precision )
+			fprintf('Generated new candidate through optimizer feedback: %s', char(V) );
+			
+		end
+
 	end
 
 	if ( success == 1 )
@@ -175,8 +186,7 @@ end
 	end
 end
 
-
-function [posresult, negresult] = querySolver( V, dVdt, Z, X, Xlower, Xupper, Xexcludelower, Xexcludeupper )
+function [posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcludelower, Xexcludeupper )
 	[~, myname] = system('hostname');
 	myname = strtrim(myname);
 
