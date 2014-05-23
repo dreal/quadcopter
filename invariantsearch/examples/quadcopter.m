@@ -1,5 +1,5 @@
 clear all; close all;
-addpath(genpath('SOSTOOLS.300'));
+addpath(genpath('..'));
 tic;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -101,6 +101,8 @@ x10lower = -0.5; x10upper = 0.5;
 x11lower = -0.5; x11upper = 0.5;
 x12lower = -0.5; x12upper = 0.5;
 x13lower = -0.5; x13upper = 0.5;
+Xlower = [ x1lower; x2lower; x3lower; x4lower; x5lower; x6lower; x7lower; x8lower; x9lower; x10lower; x11lower; x12lower; x13lower ];
+Xupper = [ x1upper; x2upper; x3upper; x4upper; x5upper; x6upper; x7upper; x8upper; x9upper; x10upper; x11upper; x12upper; x13upper ];
 % Exclusion zone
 x1excludelower = -0.01; x1excludeupper = 0.01;
 x2excludelower = -0.01; x2excludeupper = 0.01;
@@ -115,243 +117,19 @@ x10excludelower = -0.01; x10excludeupper = 0.01;
 x11excludelower = -0.01; x11excludeupper = 0.01;
 x12excludelower = -0.01; x12excludeupper = 0.01;
 x13excludelower = -0.01; x13excludeupper = 0.01;
+Xexcludelower = [ x1excludelower; x2excludelower; x3excludelower; x4excludelower; x5excludelower; x6excludelower; x7excludelower; x8excludelower; x9excludelower; x10excludelower; x11excludelower; x12excludelower; x13excludelower ];
+Xexcludeupper = [ x1excludeupper; x2excludeupper; x3excludeupper; x4excludeupper; x5excludeupper; x6excludeupper; x7excludeupper; x8excludeupper; x9excludeupper; x10excludeupper; x11excludeupper; x12excludeupper; x13excludeupper ];
 
 % To how many decimal places should coefficients be computed?
-precision = 3;
+precision = 1;
 % Number of initial samples
 samplenumber = 1;
 % Max number of iterations
 maxiterations = 150;
 
 
+[success, barrier] =barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxiterations)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Set up the local workspace for this machine
-[~, myname] = system('hostname');
-myname = strtrim( myname ); % remove newline at end
-discard = system(sprintf('mkdir drealqueries/%s', myname));
-discard = system(sprintf('rm drealqueries/%s/*', myname)); %clear it if it exists from a previous run
-
-%% Generate a monomial vector. Candidate will be z'*p, for p parameter vector
-Z = monomials(X, degree);
-dZdX = jacobian(Z, X);
-
-success = 0;
-iterations = 0;
-for i = 1:length(X) %initialize empty sample arrays
-	gensamples = sprintf('x%isamples = [];', i);
-	eval(gensamples);
-end
-%% Initialize with a random initial point
-%for i = 1:length(X)
-%	gensamples = sprintf('x%isamples = [x%isamples, (abs(x%iupper) + abs(x%ilower))*rand + x%ilower]', i, i, i, i, i);
-%	eval(gensamples);
-%end
-% Generate some sample points, uniformly distributed
-for i = 1:length(X)
-	gensamples = sprintf('x%isamples = linspace( x%ilower, x%iupper, samplenumber );', i, i, i);
-	eval(gensamples);
-end
-while ( (success == 0) && (iterations < maxiterations) )
-
-fprintf( 'Starting iteration %i\n', iterations );
-
-%% Generate some sample points, uniformly distributed
-%for i = 1:length(X)
-%	gensamples = sprintf('x%isamples = linspace( x%ilower, x%iupper, samplenumber );', i, i, i);
-%	eval(gensamples);
-%end
-
-% Generate samples randomly, on demand, as optimzation fails
-%for i = 1:length(X)
-%	gensamples = sprintf('x%isamples = [x%isamples, (abs(x%iupper) + abs(x%ilower))*rand + x%ilower]', i, i, i, i, i);
-%	eval(gensamples);
-%end
-
-
-clear Xsamples;
-crosssamplegen = 'Xsamples = setprod( ';
-for i = 1:length(X)
-	crosssamplegen = [crosssamplegen, sprintf('x%isamples,', i)];
-end
-crosssamplegen = [crosssamplegen(1:length(crosssamplegen)-1), ');']; 
-eval(crosssamplegen);
-
-
-
-derivAt = [];
-gradAt = [];
-Acounter = 0;
-for i = 1:size( Xsamples, 1 )
-	fprintf('Iteration %i: Evaluating sample %i of %i...\n', iterations, i, size(Xsamples, 1));
-	gradAt(:,:,i) = subs( dZdX, X, transpose(Xsamples(i, :)) );
-	derivAt(:,:,i) = gradAt(:,:,i)*f(Xsamples(i,:));
-	Acounter = Acounter + 2;
-	A( Acounter, : ) = derivAt(:, :, i)';
-	A( Acounter + 1, : ) = subs(-Z, X, transpose(Xsamples(i, :)) );
-end
-
-b = zeros( Acounter + 1, 1);
-objective = zeros( length(Z), 1);
-
-fprintf('Iteration %i: Starting optimization\n', iterations);
-[x, fval, exitflag, output, lambda] = linprog( objective, A, b);
-
-if ( exitflag == 1 )
-	fprintf('Iteration %i: Candidate successfully computed\n', iterations);
-else
-	fprintf('Iteration %i: Optimizer reported errors, check exitflag and output\n', iterations);
-end
-
-% Round to the desired precision
-x = x*(10^precision);
-x = round(x);
-x = x/(10^precision);
-
-V = char(vpa(Z.'*x));
-dVdt = char(vpa(jacobian(Z.'*x)*f(X)));
-fprintf( 'Iteration %i: The candidate function is %s\n', iterations, V );
-fprintf( 'Iteration %i: Its derivative is %s\n', iterations, dVdt );
-iterations = iterations + 1;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Send it over to dReal
-
-fprintf('Iteration %i: Generating dReal queries...\n', iterations);
-positivequery = fopen( sprintf('drealqueries/%s/functionpositivity.smt2', myname), 'w+' );
-negativequery = fopen( sprintf('drealqueries/%s/derivativenegativity.smt2', myname), 'w+' );
-
-% Header
-fprintf( positivequery, '(set-logic QF_NRA)\n\n' );
-fprintf( negativequery, '(set-logic QF_NRA)\n\n' );
-
-% Declare vars
-for i = 1:length(X)
-	fprintf( positivequery, '(declare-fun %s () Real)\n', char(X(i)) );
-	fprintf( negativequery, '(declare-fun %s () Real)\n', char(X(i)) );
-end
-fprintf( positivequery, '\n' );
-fprintf( negativequery, '\n' );
-
-% Declare region of interest
-for i = 1:length(X)
-	eval( sprintf('this_lowerbound = x%ilower;', i) );
-	eval( sprintf('this_upperbound = x%iupper;', i) );
-
-	fprintf( positivequery, '(assert (<= %f %s))\n', this_lowerbound, char(X(i)) );
-	fprintf( negativequery, '(assert (<= %f %s))\n', this_lowerbound, char(X(i)) );
-	fprintf( positivequery, '(assert (>= %f %s))\n', this_upperbound, char(X(i)) );
-	fprintf( negativequery, '(assert (>= %f %s))\n', this_upperbound, char(X(i)) );
-end
-fprintf( positivequery, '\n' );
-fprintf( negativequery, '\n' );
-
-% Declare the exclusion zone
-for i = 1:length(X)
-	eval( sprintf('this_lowerexclude = x%iexcludelower;', i) );
-	eval( sprintf('this_upperexclude = x%iexcludeupper;', i) );
-
-	fprintf( positivequery, '(assert (or (>= %f %s) (<= %f %s)))\n', this_lowerexclude, char(X(i)), this_upperexclude, char(X(i)) );
-	fprintf( negativequery, '(assert (or (>= %f %s) (<= %f %s)))\n', this_lowerexclude, char(X(i)), this_upperexclude, char(X(i)) );
-end
-fprintf( positivequery, '\n' );
-fprintf( negativequery, '\n' );
-
-% Generate query --- remember, proof is by refutation of the negation, so negation goes here
-ifx2pfxIN = fopen( sprintf('drealqueries/%s/infile', myname), 'w+' );
-fprintf( ifx2pfxIN, '%s <= 0', V );
-fclose( ifx2pfxIN );
-system( sprintf('cd infix2prefix; java Infix2Prefix ../drealqueries/%s/infile > ../drealqueries/%s/outfile', myname, myname ));
-ifx2pfxOUT = fopen( sprintf('drealqueries/%s/outfile', myname), 'r' );
-fprintf( positivequery, '(assert %s )\n\n', fgetl( ifx2pfxOUT) );
-fclose( ifx2pfxOUT );
-
-ifx2pfxIN = fopen( sprintf('drealqueries/%s/infile', myname), 'w+' );
-fprintf( ifx2pfxIN, '%s > 0', dVdt );
-fclose( ifx2pfxIN );
-system( sprintf('cd infix2prefix; java Infix2Prefix ../drealqueries/%s/infile > ../drealqueries/%s/outfile', myname, myname ));
-ifx2pfxOUT = fopen( sprintf('drealqueries/%s/outfile', myname), 'r' );
-fprintf( negativequery, '(assert %s )\n\n', fgetl( ifx2pfxOUT ) );
-fclose( ifx2pfxOUT );
-
-% End of file
-fprintf( positivequery, '(check-sat)\n' );
-fprintf( negativequery, '(check-sat)\n' );
-fprintf( positivequery, '(exit)\n\n' );
-fprintf( negativequery, '(exit)\n\n' );
-fclose( positivequery );
-fclose( negativequery );
-
-fprintf('Iteration %i: dReal queries generated, running dReal...\n', iterations);
-
-% Now run dReal --- NOTE that dReal needs to be in your path, and named "dreal"
-system(sprintf('cd drealqueries/%s; ../dreal --model functionpositivity.smt2 > positivityresult', myname));
-system(sprintf('cd drealqueries/%s; ../dreal --model derivativenegativity.smt2 > negativityresult', myname));
-
-fprintf('Iteration %i: dReal computation terminated, checking output...\n', iterations);
-
-posres = fopen(sprintf('drealqueries/%s/positivityresult',myname), 'r');
-negres = fopen(sprintf('drealqueries/%s/negativityresult',myname), 'r');
-posresult = fgetl( posres );
-negresult = fgetl( negres );
-if ( strcmp(posresult, 'unsat') && strcmp(negresult,'unsat' ) )
-	fprintf('Iteration %i: Candidate validated successfully!\n', iterations);
-	fprintf('Validated: %s\n', V);
-	success = 1;
-elseif ( iterations < maxiterations )
-	fprintf('Candidate validation failed, seeing what I can learn from the dReal fallout.\n');
-	
-	if ( strcmp( posresult, 'sat' ) )
-		fprintf('Function was not positive. Extracting counterexample\n');
-		poscex = fopen(sprintf('drealqueries/%s/functionpositivity.smt2.model',myname), 'r'); 
-		fgetl( poscex ); % discard human-friendly header
-		clear cex_output; clear cex_lo; clear cex_hi;
-		cex_output = textscan(poscex, '%s : [%f, %f];');
-		fclose(poscex);
-		cex_label = cex_output{1}; cex_lo = cex_output{2}; cex_hi = cex_output{3};
-
-		assert( length(cex_output{2}) == length(X), 'Something went wrong when trying to parse function positivity counterexample\n');
-		for i = 1:length(X)
-			clear cexindex;
-			cexindex = find(strcmp( sprintf('x%i', i), cex_label));
-			gensamples = sprintf('x%isamples = [x%isamples (cex_lo(%i) + cex_hi(%i))/2]', i, i, cexindex, cexindex);
-			eval(gensamples);
-		end
-
-	else
-		fprintf('Function was positive\n');
-	end
-
-	if ( strcmp( negresult, 'sat' ) )
-		fprintf('Derivative was not negative. Extracting counterexample\n');
-		negcex = fopen(sprintf('drealqueries/%s/derivativenegativity.smt2.model',myname), 'r'); 
-		fgetl( negcex ); % discard human-friendly header
-		clear cex_output; clear cex_lo; clear cex_hi;
-		cex_output = textscan(negcex, '%s : [%f, %f];');
-		fclose(negcex);
-		cex_label = cex_output{1}; cex_lo = cex_output{2}; cex_hi = cex_output{3};
-
-		assert( length(cex_output{2}) == length(X), 'Something went wrong when trying to parse derivative negativity counterexample\n');
-		for i = 1:length(X)
-			clear cexindex;
-			cexindex = find(strcmp( sprintf('x%i', i), cex_label));
-			gensamples = sprintf('x%isamples = [x%isamples (cex_lo(%i) + cex_hi(%i))/2]', i, i, cexindex, cexindex);
-			eval(gensamples);
-		end
-	else
-		fprintf('Derivative was negative\n');
-	end
-
-	fprintf('Learned from counterexample, running next iteration\n');
-
-else 
-	fprintf('Validation failed, maximum number of iterations reached, giving up.\n');
-end
-
-
-end
-
-toc;

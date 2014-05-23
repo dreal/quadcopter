@@ -13,6 +13,7 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 	success = 0;
 	iterations = 0;
 	while ( (success == 0) && (iterations < maxiterations) )
+		LOG(sprintf('Starting iteration %i', iterations));
 		[A,b] = generateSampleConstraints( Xsamples, X, Z, f);
 		V = generateCandidate( Z, A, b, precision );
 		dVdt = vpa(jacobian(V, X)*f(X));
@@ -24,29 +25,37 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 
 		if ( strcmp(posresult, 'unsat') && strcmp(negresult,'unsat' ) )
 			fprintf('Candidate validated successfully!\n');
+			LOG('Candidate validated successfully!');
 			fprintf('Validated: %s\n', char(V));
+			LOG(sprintf('Validated: %s', char(V)));
 			success = 1;
 		elseif ( iterations < maxiterations )
 			fprintf('Candidate validation failed, seeing what I can learn from the dReal fallout.\n');
+			LOG('Candidate validation failed, seeing what I can learn from the dReal fallout.');
 			
 			if ( strcmp( posresult, 'sat' ) )
 				fprintf('Function was not positive. Extracting counterexample\n');
+				LOG('Function was not positive. Extracting counterexample');
 				poscex = extractCEX( sprintf('../drealqueries/%s/functionpositivity.smt2.model', myname) );
 				Xsamples = appendSample( Xsamples, poscex );
 			else
 				fprintf('Function was positive\n');
+				LOG('Function was positive');
 			end
 		
 			if ( strcmp( negresult, 'sat' ) )
 				fprintf('Derivative was not negative. Extracting counterexample\n');
+				LOG('Derivative was not negative. Extracting counterexample');
 				negcex = extractCEX(sprintf('../drealqueries/%s/derivativenegativity.smt2.model',myname) ); 
 				Xsamples = appendSample( Xsamples, negcex );
 				
 			else
 				fprintf('Derivative was negative\n');
+				LOG('Derivative was negative');
 			end
 		else 
 			fprintf('Validation failed, maximum number of iterations reached, giving up.\n');
+			LOG('Validation failed, maximum number of iterations reached, giving up.');
 		end
 		
 		iterations = iterations + 1;
@@ -54,6 +63,7 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 
 	if ( success == 0 )
 		fprintf('Validation failed--returning only a candidate solution.\n');
+		LOG('Validation failed--returning only a candidate solution.');
 	end
 
 	barrier = V;	
@@ -66,6 +76,17 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+function LOG( stringtolog )
+	[~, myname] = system('hostname');
+	myname = strtrim( myname ); % remove newline at end
+
+	logfile = fopen( sprintf('../drealqueries/%s/logfile', myname), 'a' );
+	fprintf( logfile, '%s\n', stringtolog );
+	fclose( logfile );
+
+end
+	
+
 function generateWorkspace()
 	addpath(genpath('SOSTOOLS.300'));
 % Set up the local workspace for this machine
@@ -73,6 +94,10 @@ function generateWorkspace()
 	myname = strtrim( myname ); % remove newline at end
 	discard = system(sprintf('mkdir ../drealqueries/%s', myname));
 	discard = system(sprintf('rm ../drealqueries/%s/*', myname)); %clear it if it exists from a previous run
+	% Clear logfile
+	logfile = fopen( sprintf('../drealqueries/%s/logfile', myname), 'w' );
+	fprintf( logfile, 'Initialized on %s\n', date );
+	fclose(logfile);
 end
 
 function Xsamples = generateInitialSamples( X, Xlower, Xupper, samplenumber )
@@ -96,11 +121,13 @@ end
 
 function extendedSamples = appendSample( sampleList, newSample )
 	fprintf('Appending sample...\n');
+	LOG('Appending sample...');
 	extendedSamples = [sampleList; newSample];
 end
 
 function [A,b] = generateSampleConstraints( Xsamples, X, Z, f )
 	fprintf('Generating constraints...\n');
+	LOG('Generating constraints...');
 
 	dZdX = jacobian(Z, X);
 	derivAt = [];
@@ -119,14 +146,17 @@ end
 
 function V = generateCandidate( Z, A, b, precision )
 	fprintf('Generating candidate...\n');
+	LOG('Generating candidate...');
 
 	objective = zeros( length(Z), 1);
 	[x, fval, exitflag, output, lambda] = linprog( objective, A, b);
 	
 	if ( exitflag == 1 )
 		fprintf('Candidate successfully computed\n');
+		LOG('Candidate successfully computed');
 	else
 		fprintf('Optimizer reported errors, check exitflag and output\n');
+		LOG('Optimizer reported errors, check exitflag and output');
 	end
 	
 	% Round to the desired precision
@@ -154,19 +184,23 @@ function [V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z
 
 		if ( posmin < 0 )
 			fprintf('Improving function positivity with optimizer counterexample...\n');
+			LOG('Improving function positivity with optimizer counterexample...');
 			Xsamples = appendSample( Xsamples, transpose(posminx) )
 			success = 0;
 		else
 			fprintf('Function positivity succeeds w.r.t. optimizer.\n');
+			LOG('Function positivity succeeds w.r.t. optimizer.');
 			success = 1;
 		end
 
 		if ( negmax < 0 )
 			fprintf('Improving derivative negativity with optimizer counterexample...\n');
+			LOG('Improving derivative negativity with optimizer counterexample...');
 			Xsamples = appendSample( Xsamples, transpose(negmaxx) )
 			success = success & 0;
 		else
 			fprintf('Derivative negativity succeeds w.r.t. optimizer\n');
+			LOG('Derivative negativity succeeds w.r.t. optimizer');
 			success = success & 1;
 		end
 
@@ -174,6 +208,7 @@ function [V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z
 			[A, b] = generateSampleConstraints( Xsamples, X, Z, f );
 			V = generateCandidate(Z, A, b, precision )
 			fprintf('Generated new candidate through optimizer feedback: %s', char(V) );
+			LOG(sprintf('Generated new candidate through optimizer feedback: %s', char(V) ));
 			
 		end
 
@@ -181,8 +216,10 @@ function [V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z
 
 	if ( success == 1 )
 		fprintf('Candidate is approved by the optimizer\n');
+		LOG('Candidate is approved by the optimizer');
 	else
 		fprintf('Candidate is not yet at its best w.r.t. optimizer, but maximum iterations have been reached\n');
+		LOG('Candidate is not yet at its best w.r.t. optimizer, but maximum iterations have been reached');
 	end
 end
 
