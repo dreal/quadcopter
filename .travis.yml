@@ -1,0 +1,24 @@
+language: cpp
+cache: apt
+env:
+  global:
+    # BB_TOKEN=xxxx - encrypt "bitbucket key" with travis-ci key
+    - secure: "K5tqlHATdVEyxu32F3S5fCq4qr3byBEgjEOW7k0nVpw6M0DMJxtaxzHYKotKp//byIEXGjdDbBdRzDd9EPhMSx0ETvm8m74mBWovCScY7jKlX+XRl+uEEbdVCP8c1HYWkgiCXpB4PdRzo9hwXyA4B2D3mYFJYBg9MFDIwG3F3cw="
+    # REPO=BLESSED - encrypt "BLESSED" with private key (travis-ci)
+    - secure: "ckSxAvFv5fjDsfP2j6kCBLyTaebY1NtS45YZpTeh4OJRXrCpGyPo7BJ1oeLxSv443A/W9NqZ1obtVs8+ZDikKWpecg+XgrGRoJ8GxulhV4x6JBUOR5cUUC8xfbH0n5o914thlM7wb37W2LiHOQaolv3vByLENbT1fMi8aWXzb5M="
+install:
+  # PUSH TO BACKUP REPO
+  - if [[ $REPO == BLESSED ]]; then
+      git fetch --unshallow;
+      git push -q https://soonhok:${BB_TOKEN}@bitbucket.org/dreal/quadcopter.git +master;
+    fi
+
+script:
+  - echo done
+
+notifications:
+  email:
+    recipients:
+     - dreal-build@googlegroups.com
+    on_success: change
+    on_failure: always
