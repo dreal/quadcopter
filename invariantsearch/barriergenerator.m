@@ -1,5 +1,6 @@
 
-function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxiterations) 
+function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxiterations) 	
+	overallstart = clock();
 
 	[~, myname] = system('hostname');
 	myname = strtrim( myname ); % remove newline at end
@@ -16,7 +17,7 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 	iterations = 0;
 	
 	while ( (success == 0) && (iterations < maxiterations) )
-		LOG(sprintf('Starting iteration %i', iterations));
+		LOG(sprintf('Starting iteration %i\n', iterations));
 		%[A,b] = generateSampleConstraints( Xsamples, X, Z, f);
 		V = generateCandidate( Z, A, b, precision );
 		dVdt = vpa(jacobian(V, X)*f(X));
@@ -24,14 +25,15 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 		[V, Xsamples, A, b] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, A, b, X, Z, f, maxiterations, precision );
 		dVdt = vpa(jacobian(V, X)*f(X));
 
+		startdreal = clock();
 		[posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcludelower, Xexcludeupper );
+		stopdreal = clock();
+		fprintf(sprintf('Consulting dReal took %i\n', etime(stopdreal, startdreal)));
 
-		fprintf(sprintf('Consulting dReal took: %i time units', toc-tic));
-		LOG(sprintf('Consulting dReal took: %i time units', toc-tic));
 
 		if ( strcmp(posresult, 'unsat') && strcmp(negresult,'unsat' ) )
 			fprintf('Candidate validated successfully!\n');
-			LOG('Candidate validated successfully!');
+			LOG('Candidate validated successfully!\n');
 			fprintf('Validated: %s\n', char(V));
 			LOG(sprintf('Validated: %s', char(V)));
 			success = 1;
@@ -75,6 +77,10 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 	end
 
 	barrier = V;	
+
+	overallstop = clock();
+	fprintf(sprintf('Total elapsed time was', etime(overallstop, overallstart)));
+	LOG(sprintf('Total elapsed time was', etime(overallstop, overallstart)));
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -112,7 +118,7 @@ function Xsamples = generateInitialSamples( X, Xlower, Xupper, samplenumber )
 
 	fprintf('Generating initial samples...\n');
 	LOG('Generating initial samples...\n');
-	start = tic;
+	start = clock();
 	for i = 1:length(X) %initialize empty sample arrays
 		gensamples = sprintf('x%isamples = [];', i);
 		eval(gensamples);
@@ -130,9 +136,9 @@ function Xsamples = generateInitialSamples( X, Xlower, Xupper, samplenumber )
 	crosssamplegen = [crosssamplegen(1:length(crosssamplegen)-1), ');']; 
 	eval(crosssamplegen);
 
-	stop = toc;
-	fprintf(sprintf('Generating initial samples took %i time units\n', stop));
-	LOG(sprintf('Generating initial samples took %i time units\n', stop));
+	stop = clock();
+	fprintf(sprintf('Generating initial samples took %i time units\n', etime(stop, start)));
+	LOG(sprintf('Generating initial samples took %i time units\n', etime(stop, start)));
 end
 
 function extendedSamples = appendSample( sampleList, newSample )
@@ -145,7 +151,7 @@ function [A,b] = generateSampleConstraints( Xsamples, X, Z, f )
 	fprintf('Generating sample constraints...\n');
 	LOG('Generating sample constraints...\n');
 
-	start = tic;
+	start = clock();
 
 	dZdX = jacobian(Z, X);
 	derivAt = [];
@@ -161,16 +167,16 @@ function [A,b] = generateSampleConstraints( Xsamples, X, Z, f )
 	
 	b = zeros( size(A,1), 1);
 	
-	stop = toc;
-	fprintf(sprintf('Generating sample constraints took %i time units\n', stop));
-	LOG(sprintf('Generating sample constraints took %i time units\n', stop));
+	stop = clock();
+	fprintf(sprintf('Generating sample constraints took %i time units\n', etime(stop, start)));
+	LOG(sprintf('Generating sample constraints took %i time units\n', etime(stop, start)));
 end
 
 function [A, b] = appendSampleConstraints( A, b, X, Z, f, newSamples )
 	fprintf('Appending sample constraints...\n');
 	LOG('Appending sample constraints...');
 
-	start = tic;
+	start = clock();
 
 	dZdX = jacobian(Z, X);
 	derivAt = [];
@@ -186,9 +192,9 @@ function [A, b] = appendSampleConstraints( A, b, X, Z, f, newSamples )
 
 	b = [b; zeros(size(A,1) - length(b), 1)];
 
-	stop = toc;
-	fprintf(sprintf('Appending sample constraints took %i time units\n', stop));
-	LOG(sprintf('Appending sample constraints took %i time units\n', stop));
+	stop = clock();
+	fprintf(sprintf('Appending sample constraints took %i time units\n', etime(stop, start)));
+	LOG(sprintf('Appending sample constraints took %i time units\n', etime(stop, start)));
 
 
 end
@@ -196,7 +202,7 @@ end
 function V = generateCandidate( Z, A, b, precision )
 	fprintf('Generating candidate...\n');
 	LOG('Generating candidate...');
-	start = tic;
+	start = clock();
 
 	objective = zeros( length(Z), 1);
 	[x, fval, exitflag, output, lambda] = linprog( objective, A, b);
@@ -215,9 +221,9 @@ function V = generateCandidate( Z, A, b, precision )
 	x = x/(10^precision);
 	
 	V = vpa(Z.'*x);
-	stop = toc;
-	fprintf(sprintf('Generating candidate took %i time units\n', stop));
-	LOG(sprintf('Generating candidate took %i time units\n', stop));
+	stop = clock();
+	fprintf(sprintf('Generating candidate took %i time units\n', etime(stop,start)));
+	LOG(sprintf('Generating candidate took %i time units\n', etime(stop,start)));
 end
 
 function [V, Xsamples, A, b] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, A, b, X, Z, f, maxiterations, precision )
@@ -232,8 +238,16 @@ function [V, Xsamples, A, b] = improveWithOptimizer( V, Xsamples, Xlower, Xupper
 		dVdt = vpa(jacobian(V, X)*f(X));
 		minusdVfunc = matlabFunction( -dVdt, 'vars', {X} );
 
+		startpos = clock();
 		[posminx, posmin, posexitflag, posoutput] = fmincon(Vfunc, zeros(length(X), 1), [], [], [], [], Xlower, Xupper);
+		endpos = clock();
+		fprintf(sprintf('Checking positivity with optimizer took %i', etime(endpos, startpos)))
+		LOG(sprintf('Checking positivity with optimizer took %i', etime(endpos, startpos)))
+		startneg = clock();
 		[negmaxx, negmax, negexitflag, negoutput] = fmincon(minusdVfunc, zeros(length(X), 1), [], [], [], [], Xlower, Xupper);
+		endneg = clock();
+		fprintf(sprintf('Checking negativity with optimizer took %i', etime(endneg, startneg)))
+		LOG(sprintf('Checking negativity with optimizer took %i', etime(endneg, startneg)))
 
 		if ( posmin < 0 )
 			fprintf('Improving function positivity with optimizer counterexample...\n');
