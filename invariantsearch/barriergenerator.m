@@ -232,6 +232,8 @@ function [V, Xsamples, A, b] = improveWithOptimizer( V, Xsamples, Xlower, Xupper
 	success = 0;
 
 	while ( (iterations < maxiterations) && (success == 0) )
+		fprintf(sprintf('Starting optimizer iteration %i', iterations))
+		LOG(sprintf('Starting optimizer iteration %i', iterations))
 
 		Vfunc = matlabFunction( V, 'vars', {X} );
 
@@ -280,6 +282,8 @@ function [V, Xsamples, A, b] = improveWithOptimizer( V, Xsamples, Xlower, Xupper
 			LOG(sprintf('Generated new candidate through optimizer feedback: %s', char(V) ));
 			
 		end
+
+		iterations = iterations + 1;
 
 	end
 
