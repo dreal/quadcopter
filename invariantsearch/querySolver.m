@@ -68,7 +68,7 @@ function [posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcl
 	fclose( negativequery );
 
 	% Now run dReal --- NOTE that dReal needs to be in your path, and named "dreal"
-	system(sprintf('cd ../drealqueries/%s; ../dreal --model functionpositivity.smt2 > positivityresult', myname));
+	system(sprintf('cd ../drealqueries/%s; ../dreal --model --precision=0.00001 functionpositivity.smt2 > positivityresult', myname));
 	system(sprintf('cd ../drealqueries/%s; ../dreal --model derivativenegativity.smt2 > negativityresult', myname));
 
 	posres = fopen(sprintf('../drealqueries/%s/positivityresult',myname), 'r');
