@@ -88,35 +88,35 @@ f = @(X) [...
 degree = 2; %desired highest degree for the template monomials
 
 % Region of interest
-x1lower = -0.5; x1upper = 0.5;
-x2lower = -0.5; x2upper = 0.5;
-x3lower = -0.5; x3upper = 0.5;
-x4lower = -0.5; x4upper = 0.5;
-x5lower = -0.5; x5upper = 0.5;
-x6lower = -0.5; x6upper = 0.5;
-x7lower = -0.5; x7upper = 0.5;
-x8lower = -0.5; x8upper = 0.5;
-x9lower = -0.5; x9upper = 0.5;
-x10lower = -0.5; x10upper = 0.5;
-x11lower = -0.5; x11upper = 0.5;
-x12lower = -0.5; x12upper = 0.5;
-x13lower = -0.5; x13upper = 0.5;
+x1lower = -0.1; x1upper = 0.1;
+x2lower = -0.1; x2upper = 0.1;
+x3lower = -0.1; x3upper = 0.1;
+x4lower = -0.1; x4upper = 0.1;
+x5lower = -0.1; x5upper = 0.1;
+x6lower = -0.1; x6upper = 0.1;
+x7lower = -0.1; x7upper = 0.1;
+x8lower = -0.1; x8upper = 0.1;
+x9lower = -0.1; x9upper = 0.1;
+x10lower = -0.1; x10upper = 0.1;
+x11lower = -0.1; x11upper = 0.1;
+x12lower = -0.1; x12upper = 0.1;
+x13lower = -0.1; x13upper = 0.1;
 Xlower = [ x1lower; x2lower; x3lower; x4lower; x5lower; x6lower; x7lower; x8lower; x9lower; x10lower; x11lower; x12lower; x13lower ];
 Xupper = [ x1upper; x2upper; x3upper; x4upper; x5upper; x6upper; x7upper; x8upper; x9upper; x10upper; x11upper; x12upper; x13upper ];
 % Exclusion zone
-x1excludelower = -0.01; x1excludeupper = 0.01;
-x2excludelower = -0.01; x2excludeupper = 0.01;
-x3excludelower = -0.01; x3excludeupper = 0.01;
-x4excludelower = -0.01; x4excludeupper = 0.01;
-x5excludelower = -0.01; x5excludeupper = 0.01;
-x6excludelower = -0.01; x6excludeupper = 0.01;
-x7excludelower = -0.01; x7excludeupper = 0.01;
-x8excludelower = -0.01; x8excludeupper = 0.01;
-x9excludelower = -0.01; x9excludeupper = 0.01;
-x10excludelower = -0.01; x10excludeupper = 0.01;
-x11excludelower = -0.01; x11excludeupper = 0.01;
-x12excludelower = -0.01; x12excludeupper = 0.01;
-x13excludelower = -0.01; x13excludeupper = 0.01;
+x1excludelower = -0.001; x1excludeupper = 0.001;
+x2excludelower = -0.001; x2excludeupper = 0.001;
+x3excludelower = -0.001; x3excludeupper = 0.001;
+x4excludelower = -0.001; x4excludeupper = 0.001;
+x5excludelower = -0.001; x5excludeupper = 0.001;
+x6excludelower = -0.001; x6excludeupper = 0.001;
+x7excludelower = -0.001; x7excludeupper = 0.001;
+x8excludelower = -0.001; x8excludeupper = 0.001;
+x9excludelower = -0.001; x9excludeupper = 0.001;
+x10excludelower = -0.001; x10excludeupper = 0.001;
+x11excludelower = -0.001; x11excludeupper = 0.001;
+x12excludelower = -0.001; x12excludeupper = 0.001;
+x13excludelower = -0.001; x13excludeupper = 0.001;
 Xexcludelower = [ x1excludelower; x2excludelower; x3excludelower; x4excludelower; x5excludelower; x6excludelower; x7excludelower; x8excludelower; x9excludelower; x10excludelower; x11excludelower; x12excludelower; x13excludelower ];
 Xexcludeupper = [ x1excludeupper; x2excludeupper; x3excludeupper; x4excludeupper; x5excludeupper; x6excludeupper; x7excludeupper; x8excludeupper; x9excludeupper; x10excludeupper; x11excludeupper; x12excludeupper; x13excludeupper ];
 
