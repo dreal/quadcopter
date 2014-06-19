@@ -1,5 +1,6 @@
 
-function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxiterations) 
+function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxiterations) 	
+	overallstart = clock();
 
 	[~, myname] = system('hostname');
 	myname = strtrim( myname ); % remove newline at end
@@ -9,23 +10,30 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 	Z = monomials(X, 1:degree);
 	
 	Xsamples = generateInitialSamples( X, Xlower, Xupper, samplenumber );
+	A = []; b = [];
+	[A, b] = appendSampleConstraints( A, b, X, Z, f, Xsamples );
 
 	success = 0;
 	iterations = 0;
+	
 	while ( (success == 0) && (iterations < maxiterations) )
-		LOG(sprintf('Starting iteration %i', iterations));
-		[A,b] = generateSampleConstraints( Xsamples, X, Z, f);
+		LOG(sprintf('Starting iteration %i\n', iterations));
+		%[A,b] = generateSampleConstraints( Xsamples, X, Z, f);
 		V = generateCandidate( Z, A, b, precision );
 		dVdt = vpa(jacobian(V, X)*f(X));
 
-		[V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z, f, maxiterations, precision );
+		[V, Xsamples, A, b] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, A, b, X, Z, f, maxiterations, precision );
 		dVdt = vpa(jacobian(V, X)*f(X));
 
+		startdreal = clock();
 		[posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcludelower, Xexcludeupper );
+		stopdreal = clock();
+		fprintf(sprintf('Consulting dReal took %i\n', etime(stopdreal, startdreal)));
+
 
 		if ( strcmp(posresult, 'unsat') && strcmp(negresult,'unsat' ) )
 			fprintf('Candidate validated successfully!\n');
-			LOG('Candidate validated successfully!');
+			LOG('Candidate validated successfully!\n');
 			fprintf('Validated: %s\n', char(V));
 			LOG(sprintf('Validated: %s', char(V)));
 			success = 1;
@@ -38,6 +46,7 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 				LOG('Function was not positive. Extracting counterexample');
 				poscex = extractCEX( sprintf('../drealqueries/%s/functionpositivity.smt2.model', myname) );
 				Xsamples = appendSample( Xsamples, poscex );
+				[A, b] = appendSampleConstraints( A, b, X, Z, f, poscex );
 			else
 				fprintf('Function was positive\n');
 				LOG('Function was positive');
@@ -48,6 +57,7 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 				LOG('Derivative was not negative. Extracting counterexample');
 				negcex = extractCEX(sprintf('../drealqueries/%s/derivativenegativity.smt2.model',myname) ); 
 				Xsamples = appendSample( Xsamples, negcex );
+				[A, b] = appendSampleConstraints( A, b, X, Z, f, negcex );
 				
 			else
 				fprintf('Derivative was negative\n');
@@ -67,6 +77,10 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 	end
 
 	barrier = V;	
+
+	overallstop = clock();
+	fprintf(sprintf('Total elapsed time was', etime(overallstop, overallstart)));
+	LOG(sprintf('Total elapsed time was', etime(overallstop, overallstart)));
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -101,6 +115,10 @@ function generateWorkspace()
 end
 
 function Xsamples = generateInitialSamples( X, Xlower, Xupper, samplenumber )
+
+	fprintf('Generating initial samples...\n');
+	LOG('Generating initial samples...\n');
+	start = clock();
 	for i = 1:length(X) %initialize empty sample arrays
 		gensamples = sprintf('x%isamples = [];', i);
 		eval(gensamples);
@@ -117,6 +135,10 @@ function Xsamples = generateInitialSamples( X, Xlower, Xupper, samplenumber )
 	end
 	crosssamplegen = [crosssamplegen(1:length(crosssamplegen)-1), ');']; 
 	eval(crosssamplegen);
+
+	stop = clock();
+	fprintf(sprintf('Generating initial samples took %i time units\n', etime(stop, start)));
+	LOG(sprintf('Generating initial samples took %i time units\n', etime(stop, start)));
 end
 
 function extendedSamples = appendSample( sampleList, newSample )
@@ -126,8 +148,10 @@ function extendedSamples = appendSample( sampleList, newSample )
 end
 
 function [A,b] = generateSampleConstraints( Xsamples, X, Z, f )
-	fprintf('Generating constraints...\n');
-	LOG('Generating constraints...');
+	fprintf('Generating sample constraints...\n');
+	LOG('Generating sample constraints...\n');
+
+	start = clock();
 
 	dZdX = jacobian(Z, X);
 	derivAt = [];
@@ -142,11 +166,43 @@ function [A,b] = generateSampleConstraints( Xsamples, X, Z, f )
 	end
 	
 	b = zeros( size(A,1), 1);
+	
+	stop = clock();
+	fprintf(sprintf('Generating sample constraints took %i time units\n', etime(stop, start)));
+	LOG(sprintf('Generating sample constraints took %i time units\n', etime(stop, start)));
+end
+
+function [A, b] = appendSampleConstraints( A, b, X, Z, f, newSamples )
+	fprintf('Appending sample constraints...\n');
+	LOG('Appending sample constraints...');
+
+	start = clock();
+
+	dZdX = jacobian(Z, X);
+	derivAt = [];
+	gradAt = [];
+	Acounter = size(A,1) + 1;
+	for i = 1:size( newSamples, 1 )
+		gradAt(:,:,i) = subs( dZdX, X, transpose(newSamples(i, :)) );
+		derivAt(:,:,i) = gradAt(:,:,i)*f(newSamples(i,:));
+		A( Acounter, : ) = derivAt(:, :, i)';
+		A( Acounter + 1, : ) = subs(-Z, X, transpose(newSamples(i, :)) );
+		Acounter = Acounter + 2;
+	end
+
+	b = [b; zeros(size(A,1) - length(b), 1)];
+
+	stop = clock();
+	fprintf(sprintf('Appending sample constraints took %i time units\n', etime(stop, start)));
+	LOG(sprintf('Appending sample constraints took %i time units\n', etime(stop, start)));
+
+
 end
 
 function V = generateCandidate( Z, A, b, precision )
 	fprintf('Generating candidate...\n');
 	LOG('Generating candidate...');
+	start = clock();
 
 	objective = zeros( length(Z), 1);
 	[x, fval, exitflag, output, lambda] = linprog( objective, A, b);
@@ -165,27 +221,41 @@ function V = generateCandidate( Z, A, b, precision )
 	x = x/(10^precision);
 	
 	V = vpa(Z.'*x);
+	stop = clock();
+	fprintf(sprintf('Generating candidate took %i time units\n', etime(stop,start)));
+	LOG(sprintf('Generating candidate took %i time units\n', etime(stop,start)));
 end
 
-function [V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z, f, maxiterations, precision )
+function [V, Xsamples, A, b] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, A, b, X, Z, f, maxiterations, precision )
 	
 	iterations = 0;
 	success = 0;
 
 	while ( (iterations < maxiterations) && (success == 0) )
+		fprintf(sprintf('Starting optimizer iteration %i', iterations))
+		LOG(sprintf('Starting optimizer iteration %i', iterations))
 
 		Vfunc = matlabFunction( V, 'vars', {X} );
 
 		dVdt = vpa(jacobian(V, X)*f(X));
 		minusdVfunc = matlabFunction( -dVdt, 'vars', {X} );
 
+		startpos = clock();
 		[posminx, posmin, posexitflag, posoutput] = fmincon(Vfunc, zeros(length(X), 1), [], [], [], [], Xlower, Xupper);
+		endpos = clock();
+		fprintf(sprintf('Checking positivity with optimizer took %i', etime(endpos, startpos)))
+		LOG(sprintf('Checking positivity with optimizer took %i', etime(endpos, startpos)))
+		startneg = clock();
 		[negmaxx, negmax, negexitflag, negoutput] = fmincon(minusdVfunc, zeros(length(X), 1), [], [], [], [], Xlower, Xupper);
+		endneg = clock();
+		fprintf(sprintf('Checking negativity with optimizer took %i', etime(endneg, startneg)))
+		LOG(sprintf('Checking negativity with optimizer took %i', etime(endneg, startneg)))
 
 		if ( posmin < 0 )
 			fprintf('Improving function positivity with optimizer counterexample...\n');
 			LOG('Improving function positivity with optimizer counterexample...');
 			Xsamples = appendSample( Xsamples, transpose(posminx) )
+			[A, b] = appendSampleConstraints( A, b, X, Z, f, transpose(posminx) );
 			success = 0;
 		else
 			fprintf('Function positivity succeeds w.r.t. optimizer.\n');
@@ -197,6 +267,7 @@ function [V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z
 			fprintf('Improving derivative negativity with optimizer counterexample...\n');
 			LOG('Improving derivative negativity with optimizer counterexample...');
 			Xsamples = appendSample( Xsamples, transpose(negmaxx) )
+			[A, b] = appendSampleConstraints( A, b, X, Z, f, transpose(negmaxx ));
 			success = success & 0;
 		else
 			fprintf('Derivative negativity succeeds w.r.t. optimizer\n');
@@ -205,12 +276,14 @@ function [V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z
 		end
 
 		if ( success == 0 )
-			[A, b] = generateSampleConstraints( Xsamples, X, Z, f );
+			%[A, b] = generateSampleConstraints( Xsamples, X, Z, f );
 			V = generateCandidate(Z, A, b, precision )
 			fprintf('Generated new candidate through optimizer feedback: %s', char(V) );
 			LOG(sprintf('Generated new candidate through optimizer feedback: %s', char(V) ));
 			
 		end
+
+		iterations = iterations + 1;
 
 	end
 
@@ -223,85 +296,6 @@ function [V, Xsamples] = improveWithOptimizer( V, Xsamples, Xlower, Xupper, X, Z
 	end
 end
 
-function [posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcludelower, Xexcludeupper )
-	[~, myname] = system('hostname');
-	myname = strtrim(myname);
-
-	positivequery = fopen( sprintf('../drealqueries/%s/functionpositivity.smt2', myname), 'w+' );
-	negativequery = fopen( sprintf('../drealqueries/%s/derivativenegativity.smt2', myname), 'w+' );
-	
-	% Header
-	fprintf( positivequery, '(set-logic QF_NRA)\n\n' );
-	fprintf( negativequery, '(set-logic QF_NRA)\n\n' );
-	
-	% Declare vars
-	for i = 1:length(X)
-		fprintf( positivequery, '(declare-fun %s () Real)\n', char(X(i)) );
-		fprintf( negativequery, '(declare-fun %s () Real)\n', char(X(i)) );
-	end
-	fprintf( positivequery, '\n' );
-	fprintf( negativequery, '\n' );
-	
-	% Declare region of interest
-	for i = 1:length(X)
-		eval( sprintf('this_lowerbound = Xlower(%i);', i) );
-		eval( sprintf('this_upperbound = Xupper(%i);', i) );
-	
-		fprintf( positivequery, '(assert (<= %f %s))\n', this_lowerbound, char(X(i)) );
-		fprintf( negativequery, '(assert (<= %f %s))\n', this_lowerbound, char(X(i)) );
-		fprintf( positivequery, '(assert (>= %f %s))\n', this_upperbound, char(X(i)) );
-		fprintf( negativequery, '(assert (>= %f %s))\n', this_upperbound, char(X(i)) );
-	end
-	fprintf( positivequery, '\n' );
-	fprintf( negativequery, '\n' );
-	
-	% Declare the exclusion zone
-	for i = 1:length(X)
-		eval( sprintf('this_lowerexclude = Xexcludelower(%i);', i) );
-		eval( sprintf('this_upperexclude = Xexcludeupper(%i);', i) );
-	
-		fprintf( positivequery, '(assert (or (>= %f %s) (<= %f %s)))\n', this_lowerexclude, char(X(i)), this_upperexclude, char(X(i)) );
-		fprintf( negativequery, '(assert (or (>= %f %s) (<= %f %s)))\n', this_lowerexclude, char(X(i)), this_upperexclude, char(X(i)) );
-	end
-	fprintf( positivequery, '\n' );
-	fprintf( negativequery, '\n' );
-	
-	% Generate dReal query --- remember, proof is by refutation of the negation, so negation goes here
-	ifx2pfxIN = fopen( sprintf('../drealqueries/%s/infile', myname), 'w+' );
-	fprintf( ifx2pfxIN, '%s <= 0', char(V) );
-	fclose( ifx2pfxIN );
-	system( sprintf('cd ../infix2prefix; java Infix2Prefix ../drealqueries/%s/infile > ../drealqueries/%s/outfile', myname, myname ));
-	ifx2pfxOUT = fopen( sprintf('../drealqueries/%s/outfile', myname), 'r' );
-	fprintf( positivequery, '(assert %s )\n\n', fgetl( ifx2pfxOUT) );
-	fclose( ifx2pfxOUT );
-	
-	ifx2pfxIN = fopen( sprintf('../drealqueries/%s/infile', myname), 'w+' );
-	fprintf( ifx2pfxIN, '%s > 0', char(dVdt) );
-	fclose( ifx2pfxIN );
-	system( sprintf('cd ../infix2prefix; java Infix2Prefix ../drealqueries/%s/infile > ../drealqueries/%s/outfile', myname, myname ));
-	ifx2pfxOUT = fopen( sprintf('../drealqueries/%s/outfile', myname), 'r' );
-	fprintf( negativequery, '(assert %s )\n\n', fgetl( ifx2pfxOUT ) );
-	fclose( ifx2pfxOUT );
-	
-	% End of file
-	fprintf( positivequery, '(check-sat)\n' );
-	fprintf( negativequery, '(check-sat)\n' );
-	fprintf( positivequery, '(exit)\n\n' );
-	fprintf( negativequery, '(exit)\n\n' );
-	fclose( positivequery );
-	fclose( negativequery );
-
-	% Now run dReal --- NOTE that dReal needs to be in your path, and named "dreal"
-	system(sprintf('cd ../drealqueries/%s; ../dreal --model functionpositivity.smt2 > positivityresult', myname));
-	system(sprintf('cd ../drealqueries/%s; ../dreal --model derivativenegativity.smt2 > negativityresult', myname));
-
-	posres = fopen(sprintf('../drealqueries/%s/positivityresult',myname), 'r');
-	negres = fopen(sprintf('../drealqueries/%s/negativityresult',myname), 'r');
-	posresult = fgetl( posres );
-	negresult = fgetl( negres );
-	fclose(posres); fclose(negres);
-	
-end
 
 function cex = extractCEX( filename )
 
