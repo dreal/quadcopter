@@ -32,15 +32,23 @@ function [posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, exclu
 	fprintf( negativequery, '\n' );
 	
 	% Declare the exclusion zone
-	tinyBallString = '(> (+ ';
+	tinyBallString = '';
 	for i = 1:length(X)
-		tinyBallString = sprintf('%s (^ %s 2)', tinyBallString, char(X(i)));
+		tinyBallString = sprintf('%s %s^2', tinyBallString, char(X(i)));
+		if ( i ~= length(X) )
+			tinyBallString = sprintf('%s +', tinyBallString);
+		end
 	end
-	tinyBallString = sprintf('%s ) %f )', tinyBallString, exclusionRadius);
-	fprintf( positivequery, '(assert %s )\n', tinyBallString);
-	fprintf( negativequery, '(assert %s )\n', tinyBallString);
-	fprintf( positivequery, '\n' );
-	fprintf( negativequery, '\n' );
+	tinyBallString = sprintf('%s > %f ', tinyBallString, exclusionRadius);
+	ifx2pfxIN = fopen( sprintf('../drealqueries/%s/infile', myname), 'w+' );
+	fprintf( ifx2pfxIN, tinyBallString);
+	system( sprintf('cd ../infix2prefix; java Infix2Prefix ../drealqueries/%s/infile > ../drealqueries/%s/outfile', myname, myname ));
+	ifx2pfxOUT = fopen( sprintf('../drealqueries/%s/outfile', myname), 'r' );
+	exclusionZone = fgetl( ifx2pfxOUT);
+	fclose( ifx2pfxOUT );
+	fprintf( positivequery, '(assert %s )\n\n', exclusionZone );
+	fprintf( negativequery, '(assert %s )\n\n', exclusionZone );
+
 	
 	% Generate dReal query --- remember, proof is by refutation of the negation, so negation goes here
 	ifx2pfxIN = fopen( sprintf('../drealqueries/%s/infile', myname), 'w+' );
@@ -68,7 +76,7 @@ function [posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, exclu
 	fclose( negativequery );
 
 	% Now run dReal --- NOTE that dReal needs to be in your path, and named "dreal"
-	system(sprintf('cd ../drealqueries/%s; ../dreal --model --precision=0.00001 functionpositivity.smt2 > positivityresult', myname));
+	system(sprintf('cd ../drealqueries/%s; ../dreal --model --precision=0.0001 functionpositivity.smt2 > positivityresult', myname));
 	system(sprintf('cd ../drealqueries/%s; ../dreal --model derivativenegativity.smt2 > negativityresult', myname));
 
 	posres = fopen(sprintf('../drealqueries/%s/positivityresult',myname), 'r');
