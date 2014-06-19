@@ -1,5 +1,5 @@
 
-function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxiterations) 	
+function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, exclusionRadius, precision, samplenumber, maxiterations) 	
 	overallstart = clock();
 
 	[~, myname] = system('hostname');
@@ -26,7 +26,7 @@ function [success, barrier] = barriergenerator( X, f, degree, Xlower, Xupper, Xe
 		dVdt = vpa(jacobian(V, X)*f(X));
 
 		startdreal = clock();
-		[posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcludelower, Xexcludeupper );
+		[posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, exclusionRadius );
 		stopdreal = clock();
 		fprintf(sprintf('Consulting dReal took %i\n', etime(stopdreal, startdreal)));
 
@@ -95,6 +95,9 @@ function LOG( stringtolog )
 	myname = strtrim( myname ); % remove newline at end
 
 	logfile = fopen( sprintf('../drealqueries/%s/logfile', myname), 'a' );
+	if (logfile == -1)
+		keyboard;
+	end
 	fprintf( logfile, '%s\n', stringtolog );
 	fclose( logfile );
 

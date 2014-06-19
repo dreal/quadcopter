@@ -15,12 +15,7 @@ degree = 2; %desired highest degree for the template monomials
 Xlower = [-10; -10; -10];
 Xupper = [10; 10; 10];
 % Exclusion zone
-x1excludelower = -0.1; x1excludeupper = 0.1;
-x2excludelower = -0.1; x2excludeupper = 0.1;
-x3excludelower = -0.1; x3excludeupper = 0.1;
-Xexcludelower = [-0.001; -0.001; -0.001];
-Xexcludeupper = [0.001; 0.001; 0.001];
-
+exclusionRadius = 0.1
 
 % To how many decimal places should coefficients be computed?
 precision = 1;
@@ -29,6 +24,6 @@ samplenumber = 1;
 % Max number of iterations
 maxouteriterations = 150;
 
-[success, barrier] =barriergenerator( X, f, degree, Xlower, Xupper, Xexcludelower, Xexcludeupper, precision, samplenumber, maxouteriterations)
+[success, barrier] =barriergenerator( X, f, degree, Xlower, Xupper, exclusionRadius, precision, samplenumber, maxouteriterations)
                 
 toc;

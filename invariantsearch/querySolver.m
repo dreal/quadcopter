@@ -1,5 +1,5 @@
 
-function [posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcludelower, Xexcludeupper )
+function [posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, exclusionRadius )
 	[~, myname] = system('hostname');
 	myname = strtrim(myname);
 
@@ -32,13 +32,13 @@ function [posresult, negresult] = querySolver( V, dVdt, X, Xlower, Xupper, Xexcl
 	fprintf( negativequery, '\n' );
 	
 	% Declare the exclusion zone
+	tinyBallString = '(> (+ ';
 	for i = 1:length(X)
-		eval( sprintf('this_lowerexclude = Xexcludelower(%i);', i) );
-		eval( sprintf('this_upperexclude = Xexcludeupper(%i);', i) );
-	
-		fprintf( positivequery, '(assert (or (>= %f %s) (<= %f %s)))\n', this_lowerexclude, char(X(i)), this_upperexclude, char(X(i)) );
-		fprintf( negativequery, '(assert (or (>= %f %s) (<= %f %s)))\n', this_lowerexclude, char(X(i)), this_upperexclude, char(X(i)) );
+		tinyBallString = sprintf('%s (^ %s 2)', tinyBallString, char(X(i)));
 	end
+	tinyBallString = sprintf('%s ) %f )', tinyBallString, exclusionRadius);
+	fprintf( positivequery, '(assert %s )\n', tinyBallString);
+	fprintf( negativequery, '(assert %s )\n', tinyBallString);
 	fprintf( positivequery, '\n' );
 	fprintf( negativequery, '\n' );
 	
