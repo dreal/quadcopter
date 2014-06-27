@@ -75,8 +75,13 @@ X = {x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12};
 U = {U1, U2, U3, U4};
 
 zx = {x1->0, x2->0, x3->0, x4->0, x5->0, x6->0, x7->0, x8->0, x9->0, x10->0, x11->0, x12->0};
-zu = {U1->0, U2->0, U3->0, U4->0};
-zxu = {x1->0, x2->0, x3->0, x4->0, x5->0, x6->0, x7->0, x8->0, x9->0, x10->0, x11->0, x12->0, U1->0, U2->0, U3->0, U4->0};
+(* *)
+f1zx = f1/.zx; f2zx = f2/.zx; f3zx = f3/.zx; f4zx = f4/.zx; f5zx = f5/.zx; f6zx = f6/.zx; f7zx = f7/.zx; f8zx = f8/.zx; f9zx = f9/.zx; f10zx = f10/.zx; f11zx = f11/.zx; f12zx = f12/.zx; 
+
+zu = Flatten[FindInstance[(f1zx == 0) && (f2zx == 0) && (f3zx == 0) && (f4zx == 0) && (f5zx == 0) && (f6zx == 0) && (f7zx == 0) && (f8zx == 0) && (f9zx == 0) && (f10zx) == 0 && (f11zx) == 0 && (f12zx) == 0 , U, Reals]];
+
+zxu = Join[ zx, zu ]
+
 
 dfdX = Grad[f, X];
 dfdU = Grad[f, U];
@@ -84,7 +89,15 @@ dfdU = Grad[f, U];
 A0 = dfdX/.zxu;
 B0 = dfdU/.zxu;
 
+ssm = StateSpaceModel[ {A0, B0} ];
+ctrb = MatrixRank[ ControllabilityMatrix[ ssm ] ];
+
+Q = 100*IdentityMatrix[12];
+R = 1*IdentityMatrix[4];
 
 
+K = LQRegulatorGains[ ssm, {Q, R} ];
 
-		
+Acl = A0 - B0.K
+P = LyapunovSolve[Transpose[Acl], -IdentityMatrix[12] ];
+
