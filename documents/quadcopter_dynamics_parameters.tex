@@ -71,9 +71,9 @@ where $\omega$ is the angular velocity vector, $I$ is the inertia matrix, and $\
 \label{rotation}
 \left\{
 \begin{array}{rl}
-I_{xx}\ddot{\phi}=\omega_y \omega_z(I_{yy}-I_{zz})+\tau_x\\
-I_{yy}\ddot{\theta}=\omega_x \omega_z(I_{zz}-I_{xx})+\tau_y\\
-I_{zz}\ddot{\psi}=\omega_x \omega_y(I_{xx}-I_{yy})+\tau_z
+I_{xx}\ddot{\phi}=\dot{\theta}\dot{\psi}(I_{yy}-I_{zz})+\tau_x\\
+I_{yy}\ddot{\theta}=\dot{\phi}\dot{\psi}(I_{zz}-I_{xx})+\tau_y\\
+I_{zz}\ddot{\psi}=\dot{\phi}\dot{\theta}(I_{xx}-I_{yy})+\tau_z
 \end{array}
 \right.
 \end{equation} 
@@ -106,7 +106,7 @@ The necessary parameters for the dynamic modeling of the quadcopter are included
 In the linear motion equations (\ref{thrust}), (\ref{friction}) and (\ref{linear}), the following parameters must be measured directly or indirectly:
 
 \begin{center}
-$m$ - mass of the quadcopter\\
+$m$ - mass of the quadcopter = 1.32 $kg$\\
 $k$ - relation between the RPM of the rotor and the thrust\\
 $k_d$ - friction coefficient
 \end{center}
@@ -115,10 +115,10 @@ $k_d$ - friction coefficient
  
 In the rotational motion equations, described by (\ref{torque}) and (\ref{rotation}), the parameters to be measured are 
 \begin{center}
-$I_{xx}$ - moment of inertia in $X$ direction\\
-$I_{yy}$ - moment of inertia in $Y$ direction\\
-$I_{zz}$ - moment of inertia in $Z$ direction\\
-$L$ - Distance between the center of the quadcopter to any of the propellers\\
+$I_{xx}$ - moment of inertia in $X$ direction = 0.014 $kg$ $m^2$\\
+$I_{yy}$ - moment of inertia in $Y$ direction = 0.014 $kg$ $m^2$\\
+$I_{zz}$ - moment of inertia in $Z$ direction = 0.037 $kg$ $m^2$\\
+$L$ - Distance between the center of the quadcopter to any of the propellers = 0.275 $m$\\
 $b$ - Propeller drag coefficient
 \end{center}
 
@@ -130,5 +130,36 @@ The relation between the angular velocity and input voltage could be linearized 
 \end{equation}
 where $u$ is the input voltage. 
 Here, the parameters to be determined are $A$, $B$, and $C$.
-\end{document}
 
+
+\subsection{Experiments to determine the parameters}
+The mass of the quadcopter was measured using a spring scale as $m = 1.32 kg$. The distance between opposite rotors is 55 cm, and the XY coordinate of the center of mass is assumed to lie at the midpoint of opposite rotors, i.e. at a distance of 27.5 cm from any rotor. 
+\subsubsection{Moment of Inertia about yaw axis}
+To calculate the moment of inertia about yaw axis, a bifilar pendulum was used. The quadcopter was suspended in a horizontal position by vertical strings attached to its left and right arms, and given a small angular displacement about the yaw axis. The quadcopter performs oscillations, and the moment of inertia can be measured using the equation:
+\begin{equation}
+I_{zz} = \frac{mgT^2d^2}{4\pi^2l}
+\end{equation}
+where $T$ is the time period of oscillations, and $2d$ is distance between the two strings, and $l$ is the length of the strings. 
+We measured $T = 3.25 s$, $l = 264 cm$, and $d = 17 cm$ which results in a moment of inertia of 
+\begin{equation}
+I_{zz} = 0.037 kg m^2
+\end{equation}
+
+\subsubsection{Moment of inertia about pitch and roll axes}
+To find the moment of inertia about pitch and roll axes, first, the Z coordinate of the center of mass needed to be measured. For this, the quadcopter was suspended using one string attached to one of its arm, and this was repeated for all four arms. By measuring the angle that the quadcopter made with the vertical for all the four cases using the IMU, we were able to calculate the Z coordinate of the center of mass. For all four arms, the quadcopter was suspended using symmetric points (edge hole of the lower part of arm) and the angles made with vertical were calculated as:\\\\
+Left arm = $6.7^{\circ}$\\
+Front arm = $4.6^{\circ}$\\
+Right arm = $7.9^{\circ}$\\
+Back arm = $6.4^{\circ}$\\\\
+Using trigonometry, and assuming that the XY coordinate of center of mass lies at the midpoint of rotors, the height of the center of mass was calculated as the average of height given by all four arms (with respect to the lower edge of the arms):
+$h = 3.1 cm$. \\\\
+Now, two experiments were performed. In the first case, the quadcopter was suspended by strings attached to its left and right arms (at the same points where they were attached for calculating the center of mass), and given a small angular displacement about the roll axis. The time period of oscillation was measured. A similar experiment was performed by attaching strings on the front and back arms and measuring the time period for a pitch oscillations. Using this data, the roll and pitch moments of inertia can be calculated as:
+\begin{equation}
+I = \frac{mghT^2}{4\pi^2}-mh^2
+\end{equation} 
+The time period for roll and pitch axes were calculated as $T_{roll} = 1.354 s$ and $T_{pitch} = 1.345 s$. Since the two axes are symmetric, the time periods were expected to be similar. Averaging the two time periods, results in $T = 1.350 s$, which gives the moment of inertia value as:
+\begin{equation}
+I_{xx} = I_{yy} = 0.014 kg m^2
+\end{equation}
+
+\end{document}
