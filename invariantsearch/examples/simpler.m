@@ -5,8 +5,8 @@ tic
 syms x1 x2 x3; 
 X = [x1; x2; x3];
 
-f = @(X) [ X(2);
-        -X(1);
+f = @(X) [ -X(1);
+        -X(2);
         -X(3)];
 
 degree = 2; %desired highest degree for the template monomials
