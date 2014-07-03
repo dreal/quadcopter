@@ -71,9 +71,9 @@ where $\omega$ is the angular velocity vector, $I$ is the inertia matrix, and $\
 \label{rotation}
 \left\{
 \begin{array}{rl}
-I_{xx}\ddot{\phi}=\dot{\theta}\dot{\psi}(I_{yy}-I_{zz})+\tau_x\\
-I_{yy}\ddot{\theta}=\dot{\phi}\dot{\psi}(I_{zz}-I_{xx})+\tau_y\\
-I_{zz}\ddot{\psi}=\dot{\phi}\dot{\theta}(I_{xx}-I_{yy})+\tau_z
+I_{xx}\ddot{\phi}=\omega_y\omega_z(I_{yy}-I_{zz})+\tau_x\\
+I_{yy}\ddot{\theta}=\omega_x\omega_z(I_{zz}-I_{xx})+\tau_y\\
+I_{zz}\ddot{\psi}=\omega_x\omega_y(I_{xx}-I_{yy})+\tau_z
 \end{array}
 \right.
 \end{equation} 
