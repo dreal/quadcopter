@@ -1,4 +1,4 @@
-The calibration has been done using Jean Bouguet's toolbox. To understand the camera calibration data, refer to the following link:
+This folder gives the calibration data for the new stereo rig (consisting of two Logitech c920 webcams) that we have made in the lab. The calibration has been done using Jean Bouguet's toolbox. To understand the camera calibration data, refer to the following link:
 
 
 http://www.vision.caltech.edu/bouguetj/calib_doc/htmls/parameters.html
